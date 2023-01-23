@@ -19,9 +19,15 @@ if __name__ == '__main__':
             with open(file, 'r') as f:
                 data = json.load(f)
                 df = pd.json_normalize(data, record_path=file.name.split(' ')[0])
-                df['horodatage'] = pd.to_datetime(df['horodatage'], unit='s')
+                df['horodatage'] = pd.to_datetime(df['horodatage'], unit='s', utc=True)
                 df = df.set_index('horodatage')
-            csv = df.to_csv(file.name.split(' ')[0] + "_" + file.name.split(' ')[1] + ".csv")
+            csv = df.to_csv(file.name.split(' ')[0] + "_" + file.name.split(' ')[1] + "_UTC.csv", sep=';')
+        else:
+            with open(file, 'r') as f:
+                data = json.load(f)
+                df = pd.json_normalize(data, record_path=file.name.split(' ')[0])
+                df['horodatage'] = pd.to_datetime(df['horodatage'], unit='s', utc=True)
+            csv = df.to_csv(file.name.split(' ')[0] + "_" + 'cnx' + "_UTC.csv", sep=';')
 
     # Read the JSON file
 
