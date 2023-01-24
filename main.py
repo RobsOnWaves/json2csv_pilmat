@@ -28,7 +28,13 @@ if __name__ == '__main__':
             df = df.set_index('horodatage')
         if 'cnx' not in file.name:
             csv = df.to_csv(file.name.split(' ')[0] + "_" + file.name.split(' ')[1] + "_CET.csv", sep=';')
-        else:
+        elif 'cnx':
             csv = df.to_csv(file.name.split(' ')[0] + "_" + 'cnx' + "_CET.csv", sep=';')
+        elif 'evt':
+            csv = df.to_csv(file.name.split(' ')[0] + "_" + 'evt' + "_CET.csv", sep=';')
+        else:
+            print('not handled file')
+
+
 
 # See PyCharm help t https://www.jetbrains.com/help/pycharm/
