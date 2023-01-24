@@ -1,14 +1,14 @@
 version: "3.9"
 services:
   influxdb_service:
-    image: influxdb:2.6
+    image: influxdb:2.6.1
     restart: always
     environment:
       DOCKER_INFLUXDB_INIT_MODE: setup
       DOCKER_INFLUXDB_INIT_USERNAME: your_username
       DOCKER_INFLUXDB_INIT_PASSWORD: your_password
-      DOCKER_INFLUXDB_INIT_ORG: your_organisation
-      DOCKER_INFLUXDB_INIT_BUCKET: your_bucket
+      DOCKER_INFLUXDB_INIT_ORG: your-organisation
+      DOCKER_INFLUXDB_INIT_BUCKET: your-bucket
       DOCKER_INFLUXDB_INIT_RETENTION: 52w
       DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: token_influx
     volumes:

@@ -32,11 +32,12 @@ if __name__ == '__main__':
             df_for_influx = df_for_influx.set_index('horodatage')
             df = df.set_index('horodatage')
 
-        if 'e1' in file.name or 'e2' in file.name:
-            write_api = client.write_api(write_options=WriteOptions(batch_size=50_000, flush_interval=10_000))
+            # Write data to InfluxDB
+            with InfluxDBClient(url="http://localhost:8086", token="token_influx", org="your-organisation") as client:
+                client.write_api(write_options=SYNCHRONOUS).write(bucket='your-bucket', record=df_for_influx,
+                                                                  data_frame_measurement_name=file.name.split(' ')[0])
 
-            write_api.write("my-bucket", record=df_for_influx, data_frame_measurement_name=file.name.split(' ')[0])
-            write_api.close()
+        if 'e1' in file.name or 'e2' in file.name:
             csv = df.to_csv(file.name.split(' ')[0] + "_" + file.name.split(' ')[1] + "_CET.csv", sep=';')
         elif 'cnx':
             csv = df.to_csv(file.name.split(' ')[0] + "_" + 'cnx' + "_CET.csv", sep=';')
