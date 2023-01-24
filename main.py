@@ -3,9 +3,8 @@ import pandas as pd
 from pathlib import Path
 import json
 import pytz
-from influxdb_client import InfluxDBClient, Point, WriteOptions
+from influxdb_client import InfluxDBClient
 from influxdb_client.client.write_api import SYNCHRONOUS
-client = InfluxDBClient(url="http://localhost:8086", token="token_influx", org="my-organisation")
 
 # Press Maj+F10 to execute it or replace it with your code.
 # Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
@@ -16,8 +15,6 @@ if __name__ == '__main__':
 
     directory = Path("data")
     files = list(directory.glob("*.txt"))
-    write_api = client.write_api(write_options=WriteOptions(batch_size=50_000, flush_interval=10_000))
-
 
     # Get a list of files in the directory
     for file in files:
