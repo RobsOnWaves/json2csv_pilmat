@@ -22,17 +22,24 @@ if __name__ == '__main__':
         with open(file, 'r') as f:
             data = json.load(f)
             df = pd.json_normalize(data, record_path=file.name.split(' ')[0])
+            df_for_influx = pd.json_normalize(data, record_path=file.name.split(' ')[0])
+            df['horodatage'] = df['horodatage'] - 3600
+            df_for_influx['horodatage'] = df_for_influx['horodatage'] - 3600
             df['horodatage'] = pd.to_datetime(df['horodatage'], unit='s', utc=True)
-            df_for_influx = df
+            df_for_influx['horodatage'] = pd.to_datetime(df_for_influx['horodatage'], unit='s', utc=True)
             df['horodatage'] = df.apply(lambda row: row['horodatage'].astimezone(pytz.timezone('Europe/Paris')).strftime(
                 '%Y-%m-%d %H:%M:%S %Z%z'), axis=1)
             df_for_influx = df_for_influx.set_index('horodatage')
             df = df.set_index('horodatage')
 
-            # Write data to InfluxDB
-            with InfluxDBClient(url="http://localhost:8086", token="token_influx", org="your-organisation") as client:
-                client.write_api(write_options=SYNCHRONOUS).write(bucket='your-bucket', record=df_for_influx,
-                                                                  data_frame_measurement_name=file.name.split(' ')[0])
+            try:
+                # Write data to InfluxDB
+                with InfluxDBClient(url="http://localhost:8086", token="token_influx", org="your-organisation") as client:
+                    client.write_api(write_options=SYNCHRONOUS).write(bucket='your-bucket', record=df_for_influx,
+                                                                        data_frame_measurement_name=file.name.split(' ')[0])
+
+            except Exception as e:
+                print('No connection to InfluxDB')
 
         if 'e1' in file.name or 'e2' in file.name:
             csv = df.to_csv(file.name.split(' ')[0] + "_" + file.name.split(' ')[1] + "_CET.csv", sep=';')
