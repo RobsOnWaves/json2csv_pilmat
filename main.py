@@ -23,8 +23,8 @@ if __name__ == '__main__':
             data = json.load(f)
             df = pd.json_normalize(data, record_path=file.name.split(' ')[0])
             df_for_influx = pd.json_normalize(data, record_path=file.name.split(' ')[0])
-            df['horodatage'] = df['horodatage'] - 3600
-            df_for_influx['horodatage'] = df_for_influx['horodatage'] - 3600
+            df['horodatage'] = df['horodatage'] + 3600
+            df_for_influx['horodatage'] = df_for_influx['horodatage'] + 3600
             df['horodatage'] = pd.to_datetime(df['horodatage'], unit='s', utc=True)
             df_for_influx['horodatage'] = pd.to_datetime(df_for_influx['horodatage'], unit='s', utc=True)
             df['horodatage'] = df.apply(lambda row: row['horodatage'].astimezone(pytz.timezone('Europe/Paris')).strftime(
