@@ -6,19 +6,16 @@ import pytz
 from influxdb_client import InfluxDBClient
 from influxdb_client.client.write_api import SYNCHRONOUS
 
-# Press Maj+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
-
-
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
 
     directory = Path("data")
     files = list(directory.glob("*.txt"))
-
+    dts_ids = []
     # Get a list of files in the directory
     for file in files:
-
+        if file.name.split(' ')[0] not  in dts_ids:
+            dts_ids.append(file.name.split(' ')[0])
         with open(file, 'r') as f:
             data = json.load(f)
             df = pd.json_normalize(data, record_path=file.name.split(' ')[0])
@@ -29,14 +26,15 @@ if __name__ == '__main__':
             df_for_influx['horodatage'] = pd.to_datetime(df_for_influx['horodatage'], unit='s', utc=True)
             df['horodatage'] = df.apply(lambda row: row['horodatage'].astimezone(pytz.timezone('Europe/Paris')).strftime(
                 '%Y-%m-%d %H:%M:%S %Z%z'), axis=1)
-            df_for_influx = df_for_influx.set_index('horodatage')
+            #df_for_influx = df_for_influx.set_index('horodatage')
             df = df.set_index('horodatage')
 
             try:
                 # Write data to InfluxDB
                 with InfluxDBClient(url="http://localhost:8086", token="token_influx", org="your-organisation") as client:
                     client.write_api(write_options=SYNCHRONOUS).write(bucket='your-bucket', record=df_for_influx,
-                                                                        data_frame_measurement_name=file.name.split(' ')[0])
+                                                                        data_frame_measurement_name=file.name.split(' ')[0],
+                                                                        data_frame_timestamp_column='horodatage')
 
             except Exception as e:
                 print('No connection to InfluxDB')
@@ -50,6 +48,24 @@ if __name__ == '__main__':
         else:
             print('not handled file')
 
+    with InfluxDBClient(url="http://localhost:8086", token="token_influx", org="your-organisation") as client:
+        query_api = client.query_api()
+        with pd.ExcelWriter('output.xlsx') as writer:
+            for dts_id in dts_ids:
+                query = 'from(bucket: "your-bucket")\
+                        |> range(start: 2020-01-01, stop: 2023-02-01)\
+                        |> filter(fn: (r) => r["_measurement"] == "' + dts_id + '")\
+                        |> filter(fn: (r) => r["_field"] == "e1" or r["_field"] == "e2")\
+                        |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")'
 
+                data_frame = query_api.query_data_frame(query=query)
+                data_frame = data_frame.drop(columns=['_start', '_stop', 'result', 'table', '_measurement'])
+                data_frame['_time'] = data_frame.apply(
+                    lambda row: row['_time'].astimezone(pytz.timezone('Europe/Paris')).strftime(
+                    '%Y-%m-%d %H:%M:%S %Z%z'), axis=1)
+                data_frame['_time'] = data_frame['_time'].apply(lambda a: str(a))
+                data_frame['date'] = data_frame['_time'].apply(lambda a: a.split(" ")[0])
+                data_frame['heure'] = data_frame['_time'].apply(lambda a: a.split(" ")[1].split('+')[0])
+                data_frame.to_excel(writer, sheet_name=dts_id)
 
-# See PyCharm help t https://www.jetbrains.com/help/pycharm/
+    # See PyCharm help t https://www.jetbrains.com/help/pycharm/
